@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title id="title">Log</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	</head>
+	<body>
+		<h1 id="name">None</h1>
+		<span id='command'>None</span>
+		<br/><br/>
+		<span id="status"></span><button id="startbt" disabled onclick="startService()">启动</button><button id="stopbt" onclick="stopService()" disabled>停止</button>
+		<br/><br/>
+		<textarea id="log" style="position: fixed;width: 98%;height: 84%;white-space: nowrap;"></textarea>
+		<script>
+			var log = document.getElementById("log");
+			var stopbt = document.getElementById("stopbt");
+			var startbt = document.getElementById("startbt");
+			
+			var id = getQueryVariable("id");
+			if (!id) {
+				alert('id不存在');
+				window.close();
+			} else {
+				loadInit();
+				loadLog();
+				setInterval(loadLog, 1000);
+			}
+			
+			function setTextAndMoveEnd(el, text) {
+				let b = el.scrollHeight <= el.clientHeight + el.scrollTop;
+				el.value = text;
+				if (b)
+					el.scrollTop = el.scrollHeight;
+			}
+
+			function loadLog() {
+				var xhr = new XMLHttpRequest();
+				xhr.withCredentials = true;
+				xhr.addEventListener("readystatechange", function() {
+					if (this.readyState === 4) {
+						let data = JSON.parse(this.responseText);
+						stopbt.disabled = !data.isrun;
+						startbt.disabled = data.isrun;
+						document.getElementById("status").innerHTML = data.isrun ? `服务状态:[正在运行]` : `服务状态:[已停止]`;
+						setTextAndMoveEnd(log, data.data);
+					}
+				});
+				xhr.open("POST", `/getServiceOut?id=${id}`);
+				xhr.send();
+			}
+			
+			function loadInit() {
+				var xhr = new XMLHttpRequest();
+				xhr.withCredentials = true;
+				xhr.addEventListener("readystatechange", function() {
+					if (this.readyState === 4) {
+						let data = JSON.parse(this.responseText).data;
+						let command = data.cmd + '&nbsp;';
+						for (arg of data.args)
+							command+=`${arg}&nbsp;`;
+						document.getElementById("name").innerHTML = `服务ID:[${data.id}]&nbsp;&nbsp;当前服务:[${data.description}]`;
+						document.getElementById("title").innerHTML = `当前服务:[${data.description}]`;
+						document.getElementById("command").innerHTML = `命令行:&nbsp;&nbsp;"${command}"`;
+					}
+				});
+				xhr.open("POST", `/getService?id=${id}`);
+				xhr.send();
+			}
+						
+			function stopService() {
+				var xhr = new XMLHttpRequest();
+				xhr.withCredentials = true;
+				xhr.addEventListener("readystatechange", function() {
+					if (this.readyState === 4) {
+						let data = JSON.parse(this.responseText);
+						alert(`消息：${data.msg}`);
+					}
+				});
+				xhr.open("POST", `/stopService?id=${id}`);
+				xhr.send();
+			}
+			
+			function startService() {
+				var xhr = new XMLHttpRequest();
+				xhr.withCredentials = true;
+				xhr.addEventListener("readystatechange", function() {
+					if (this.readyState === 4) {
+						let data = JSON.parse(this.responseText);
+						alert(`消息：${data.msg}`);
+					}
+				});
+				xhr.open("POST", `/startService?id=${id}`);
+				xhr.send();
+			}
+			
+			function getQueryVariable(variable) {
+				var query = window.location.search.substring(1);
+				var vars = query.split("&");
+				for (var i = 0; i < vars.length; i++) {
+					var pair = vars[i].split("=");
+					if (pair[0] == variable) {
+						return pair[1];
+					}
+				}
+				return (false);
+			}
+		</script>
+	</body>
+</html>

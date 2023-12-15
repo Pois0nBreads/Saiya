@@ -1,0 +1,12 @@
+[Unit]
+Description=SaiYa_Daemon_Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/saiya/Saiyad.sh
+RemainAfterExit=yes
+PIDFile=/usr/local/saiya/Saiya.pid
+
+[Install]
+WantedBy=multi-user.target

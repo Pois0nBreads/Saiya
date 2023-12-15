@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title id="title">服务管理</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	</head>
+	<body>
+		<h1 id="name"></h1>
+		<h2 id="status">Normol</h2>
+
+		<ul id="table"></ul>
+		<script>
+			var table = document.getElementById("table");
+			var title = document.getElementById("title");
+			
+			var T = `当前服务器：${document.location.hostname}`;
+			document.getElementById("name").innerText = T
+			
+			function delTable() {
+				while (table.childNodes.length)
+					table.childNodes[0].remove();
+			}
+			
+			function addTable(list) {
+				for (item of list) {
+					let id = item.id;
+					let li = document.createElement("li");
+					let span = document.createElement("span");
+					let button1 = document.createElement("button");
+					let button2 = document.createElement("button");
+					
+					span.innerHTML = `服务ID:[${id}]&nbsp&nbsp服务名称:[${item.description}]&nbsp&nbsp 运行状态:[${item.isrun?'正在运行':'已停止'}]&nbsp&nbsp`;
+					button1.innerHTML = "查看日志";
+					button1.value = id;
+					button1.onclick = showLog;
+					
+					button2.value = id;
+					button2.onclick = item.isrun?stopService:startService;
+					button2.innerHTML = item.isrun?'停止':'启动';
+					li.append(span);
+					li.append(button1);
+					li.append(button2);
+					table.append(li);
+				}
+			}
+			
+			function showLog() {
+				window.open(`/log.html?id=${this.value}`);
+			}
+			
+			function stopService() {
+				var id = this.value;
+				var xhr = new XMLHttpRequest();
+				xhr.withCredentials = true;
+				xhr.addEventListener("readystatechange", function() {
+					if (this.readyState === 4) {
+						let data = JSON.parse(this.responseText);
+						alert(`消息：${data.msg}`);
+						getServicesList();
+					}
+				});
+				xhr.open("POST", `/stopService?id=${id}`);
+				xhr.send();
+			}
+			
+			function startService() {
+				var id = this.value;
+				var xhr = new XMLHttpRequest();
+				xhr.withCredentials = true;
+				xhr.addEventListener("readystatechange", function() {
+					if (this.readyState === 4) {
+						let data = JSON.parse(this.responseText);
+						alert(`消息：${data.msg}`);
+						getServicesList();
+					}
+				});
+				xhr.open("POST", `/startService?id=${id}`);
+				xhr.send();
+			}
+			
+			function getServicesList() {
+				var xhr = new XMLHttpRequest();
+				xhr.withCredentials = true;
+				xhr.addEventListener("readystatechange", function() {
+					if (this.readyState === 4) {
+						let data = JSON.parse(this.responseText);
+						delTable();
+						addTable(data.data);
+					}
+				});
+				xhr.open("POST", "/listServices");
+				xhr.send();
+			}
+			setInterval(getServicesList, 2000);
+			getServicesList();
+		
+		</script>
+	</body>
+</html>
